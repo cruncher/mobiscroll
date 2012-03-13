@@ -87,219 +87,39 @@
         * @param {Object} settings - Settings.
         * @return {String} - Returns the formatted date string.
         */
+        
+        
+        function addZ(n) {
+          return n < 10 ? '0' + n : '' + n ;
+        }
+        
+        function UTCString(date) {
+            // If date not supplied, use current date
+            date = date || new Date();
+        
+            return [date.getUTCFullYear(), '-',
+                   addZ(date.getUTCMonth() + 1), '-',
+                   addZ(date.getUTCDate()), 'T',
+                   addZ(date.getUTCHours()), ':',
+                   addZ(date.getUTCMinutes()), 'Z'].join('');
+        }
+        
         this.formatDate = function (format, date, settings) {
             if (!date) return null;
-            var s = $.extend({}, this.settings, settings),
-                // Check whether a format character is doubled
-                look = function(m) {
-                    var n = 0;
-                    while (i + 1 < format.length && format.charAt(i + 1) == m) { n++; i++; };
-                    return n;
-                },
-                // Format a number, with leading zero if necessary
-                f1 = function(m, val, len) {
-                    var n = '' + val;
-                    if (look(m))
-                        while (n.length < len)
-                            n = '0' + n;
-                    return n;
-                },
-                // Format a name, short or long as requested
-                f2 = function(m, val, s, l) {
-                    return (look(m) ? l[val] : s[val]);
-                },
-                output = '',
-                literal = false;
-            for (var i = 0; i < format.length; i++) {
-                if (literal)
-                    if (format.charAt(i) == "'" && !look("'"))
-                        literal = false;
-                    else
-                        output += format.charAt(i);
-                else
-                    switch (format.charAt(i)) {
-                        case 'd':
-                            output += f1('d', date.getDate(), 2);
-                            break;
-                        case 'D':
-                            output += f2('D', date.getDay(), s.dayNamesShort, s.dayNames);
-                            break;
-                        case 'o':
-                            output += f1('o', (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000, 3);
-                            break;
-                        case 'm':
-                            output += f1('m', date.getMonth() + 1, 2);
-                            break;
-                        case 'M':
-                            output += f2('M', date.getMonth(), s.monthNamesShort, s.monthNames);
-                            break;
-                        case 'y':
-                            output += (look('y') ? date.getFullYear() : (date.getYear() % 100 < 10 ? '0' : '') + date.getYear() % 100);
-                            break;
-                        case 'h':
-                            var h = date.getHours();
-                            output += f1('h', (h > 12 ? (h - 12) : (h == 0 ? 12 : h)), 2);
-                            break;
-                        case 'H':
-                            output += f1('H', date.getHours(), 2);
-                            break;
-                        case 'i':
-                            output += f1('i', date.getMinutes(), 2);
-                            break;
-                        case 's':
-                            output += f1('s', date.getSeconds(), 2);
-                            break;
-                        case 'a':
-                            output += date.getHours() > 11 ? 'pm' : 'am';
-                            break;
-                        case 'A':
-                            output += date.getHours() > 11 ? 'PM' : 'AM';
-                            break;
-                        case "'":
-                            if (look("'"))
-                                output += "'";
-                            else
-                                literal = true;
-                            break;
-                        default:
-                            output += format.charAt(i);
-                    }
-            }
-            return output;
+            
+            return UTCString(date);
         }
 
-        /**
-        * Extract a date from a string value with a specified format.
-        * @param {String} format - Input format.
-        * @param {String} value - String to parse.
-        * @param {Object} settings - Settings.
-        * @return {Date} - Returns the extracted date.
-        */
-        this.parseDate = function (format, value, settings) {
-            var def = new Date();
-            if (!format || !value) return def;
-            value = (typeof value == 'object' ? value.toString() : value + '');
-            var s = $.extend({}, this.settings, settings),
-                year = def.getFullYear(),
-                month = def.getMonth() + 1,
-                day = def.getDate(),
-                doy = -1,
-                hours = def.getHours(),
-                minutes = def.getMinutes(),
-                seconds = def.getSeconds(),
-                ampm = -1,
-                literal = false,
-                // Check whether a format character is doubled
-                lookAhead = function(match) {
-                    var matches = (iFormat + 1 < format.length && format.charAt(iFormat + 1) == match);
-                    if (matches)
-                        iFormat++;
-                    return matches;
-                },
-                // Extract a number from the string value
-                getNumber = function(match) {
-                    lookAhead(match);
-                    var size = (match == '@' ? 14 : (match == '!' ? 20 :
-                        (match == 'y' ? 4 : (match == 'o' ? 3 : 2))));
-                    var digits = new RegExp('^\\d{1,' + size + '}');
-                    var num = value.substr(iValue).match(digits);
-                    if (!num)
-                        throw 'Missing number at position ' + iValue;
-                    iValue += num[0].length;
-                    return parseInt(num[0], 10);
-                },
-                // Extract a name from the string value and convert to an index
-                getName = function(match, s, l) {
-                    var names = (lookAhead(match) ? l : s);
-                    for (var i = 0; i < names.length; i++) {
-                        if (value.substr(iValue, names[i].length).toLowerCase() == names[i].toLowerCase()) {
-                            iValue += names[i].length;
-                            return i + 1;
-                        }
-                    }
-                    throw 'Unknown name at position ' + iValue;
-                },
-                // Confirm that a literal character matches the string value
-                checkLiteral = function() {
-                    if (value.charAt(iValue) != format.charAt(iFormat))
-                        throw 'Unexpected literal at position ' + iValue;
-                    iValue++;
-                },
-                iValue = 0;
-
-            for (var iFormat = 0; iFormat < format.length; iFormat++) {
-                if (literal)
-                    if (format.charAt(iFormat) == "'" && !lookAhead("'"))
-                        literal = false;
-                    else
-                        checkLiteral();
-                else
-                    switch (format.charAt(iFormat)) {
-                        case 'd':
-                            day = getNumber('d');
-                            break;
-                        case 'D':
-                            getName('D', s.dayNamesShort, s.dayNames);
-                            break;
-                        case 'o':
-                            doy = getNumber('o');
-                            break;
-                        case 'm':
-                            month = getNumber('m');
-                            break;
-                        case 'M':
-                            month = getName('M', s.monthNamesShort, s.monthNames);
-                            break;
-                        case 'y':
-                            year = getNumber('y');
-                            break;
-                        case 'H':
-                            hours = getNumber('H');
-                            break;
-                        case 'h':
-                            hours = getNumber('h');
-                            break;
-                        case 'i':
-                            minutes = getNumber('i');
-                            break;
-                        case 's':
-                            seconds = getNumber('s');
-                            break;
-                        case 'a':
-                            ampm = getName('a', ['am', 'pm'], ['am', 'pm']) - 1;
-                            break;
-                        case 'A':
-                            ampm = getName('A', ['am', 'pm'], ['am', 'pm']) - 1;
-                            break;
-                        case "'":
-                            if (lookAhead("'"))
-                                checkLiteral();
-                            else
-                                literal = true;
-                            break;
-                        default:
-                            checkLiteral();
-                    }
-            }
-            if (year < 100)
-                year += new Date().getFullYear() - new Date().getFullYear() % 100 +
-                    (year <= s.shortYearCutoff ? 0 : -100);
-            if (doy > -1) {
-                month = 1;
-                day = doy;
-                do {
-                    var dim = 32 - new Date(year, month - 1, 32).getDate();
-                    if (day <= dim)
-                        break;
-                    month++;
-                    day -= dim;
-                } while (true);
-            }
-            hours = (ampm == -1) ? hours : ((ampm && hours < 12) ? (hours + 12) : (!ampm && hours == 12 ? 0 : hours));
-            //if (ampm && hours < 12) hours += 12;
-            var date = new Date(year, month - 1, day, hours, minutes, seconds);
-            if (date.getFullYear() != year || date.getMonth() + 1 != month || date.getDate() != day)
-                throw 'Invalid date'; // E.g. 31/02/*
+        // Expects a date in UTC STring format, as in:
+        // 2012-03-12T23:41Z
+        
+        this.parseDate = function (value) {
+            var date = new Date(),
+                no = /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
+            
+            date.setFullYear(no[1], no[2], no[3]);
+            date.setHours(no[4], no[5]);
+            
             return date;
         }
 
@@ -368,36 +188,42 @@
         * @return {Array} Array with the selected wheel values.
         */
         this.parseValue = function (val) {
-            if (this.preset) {
-                var result = [];
-                if (s.preset == 'date') {
-                    try { var d = this.parseDate(s.dateFormat, val, s); } catch (e) { var d = new Date(); };
-                    result[yOrd] = d.getFullYear();
-                    result[mOrd] = d.getMonth();
-                    result[dOrd] = d.getDate();
-                }
-                else if (s.preset == 'time') {
-                    try { var d = this.parseDate(s.timeFormat, val, s); } catch (e) { var d = new Date(); };
-                    var hour = d.getHours();
-                    result[0] = (s.ampm) ? (hour > 12 ? (hour - 12) : (hour == 0 ? 12 : hour)) : hour;
-                    result[1] = d.getMinutes();
-                    if (s.seconds) result[2] = d.getSeconds();
-                    if (s.ampm) result[s.seconds ? 3 : 2] = hour > 11 ? 'PM' : 'AM';
-                }
-                else if (s.preset == 'datetime') {
-                    try { var d = this.parseDate(s.dateFormat + ' ' + s.timeFormat, val, s); } catch (e) { var d = new Date(); };
-                    var hour = d.getHours();
-                    result[yOrd] = d.getFullYear();
-                    result[mOrd] = d.getMonth();
-                    result[dOrd] = d.getDate();
-                    result[3] = (s.ampm) ? (hour > 12 ? (hour - 12) : (hour == 0 ? 12 : hour)) : hour;
-                    result[4] = d.getMinutes();
-                    if (s.seconds) result[5] = d.getSeconds();
-                    if (s.ampm) result[s.seconds ? 6 : 5] = hour > 11 ? 'PM' : 'AM';
-                }
-                return result;
+            var result = [];
+            if (s.preset == 'date') {
+                try { var d = this.parseDate(s.dateFormat, val, s); } catch (e) { var d = new Date(); };
+                result[yOrd] = d.getFullYear();
+                result[mOrd] = d.getMonth();
+                result[dOrd] = d.getDate();
             }
-            return s.parseValue(val, this);
+            else if (s.preset == 'time') {
+                try { var d = this.parseDate(s.timeFormat, val, s); } catch (e) { var d = new Date(); };
+                var hour = d.getHours();
+                result[0] = (s.ampm) ? (hour > 12 ? (hour - 12) : (hour == 0 ? 12 : hour)) : hour;
+                result[1] = d.getMinutes();
+                if (s.seconds) result[2] = d.getSeconds();
+                if (s.ampm) result[s.seconds ? 3 : 2] = hour > 11 ? 'PM' : 'AM';
+            }
+            else if (s.preset == 'datetime') {
+                
+                
+                
+                
+                
+                
+                // YO
+                
+                
+                try { var d = this.parseDate(s.dateFormat + ' ' + s.timeFormat, val, s); } catch (e) { var d = new Date(); };
+                var hour = d.getHours();
+                result[yOrd] = d.getFullYear();
+                result[mOrd] = d.getMonth();
+                result[dOrd] = d.getDate();
+                result[3] = (s.ampm) ? (hour > 12 ? (hour - 12) : (hour == 0 ? 12 : hour)) : hour;
+                result[4] = d.getMinutes();
+                if (s.seconds) result[5] = d.getSeconds();
+                if (s.ampm) result[s.seconds ? 6 : 5] = hour > 11 ? 'PM' : 'AM';
+            }
+            return result;
         }
 
         /**
@@ -706,7 +532,7 @@
             theme: '',
             mode: 'scroller',
             preset: 'date',
-            dateFormat: 'mm/dd/yy',
+            dateFormat: 'yyyy-mm-dd',
             dateOrder: 'mmddy',
             ampm: true,
             seconds: false,
@@ -742,22 +568,6 @@
                     out += (i > 0 ? ' ' : '') + d[i];
                 }
                 return out;
-            },
-            parseValue: function(val, inst) {
-                var w = inst.settings.wheels,
-                    ret = val.split(' '),
-                    def = [],
-                    total = 0;
-                for (var i = 0; i < w.length; i++) {
-                    for (var l in w[i]) {
-                        total++;
-                        for (var v in w[i][l]) {
-                            def.push(v);
-                            break;
-                        }
-                    }
-                }
-                return ret.length == total ? ret : def;
             },
             validate: function() {
                 return true;

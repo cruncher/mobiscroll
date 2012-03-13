@@ -9,14 +9,8 @@
     <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
     <link rel="stylesheet"  href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
-
-    <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-    <script src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
-
-    <script src="mobiscroll.js" type="text/javascript"></script>
-
-    <link href="mobiscroll.css" rel="stylesheet" type="text/css" />
-
+    <link rel="stylesheet" href="mobiscroll.css" />
+    
     <style type="text/css">
         body {
             font-family: arial, verdana, sans-serif;
@@ -28,7 +22,10 @@
             margin: 5px 10px;
         }
     </style>
-
+    
+    <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <!--script src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script-->
+    <script src="mobiscroll.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             // Date with external button
@@ -131,7 +128,7 @@
 
                 <div data-role="fieldcontain">
                     <label for="date3">Datetime</label>
-                    <input type="text" name="date3" id="date3" class="mobiscroll" />
+                    <input type="datetime" name="date3" id="date3" class="mobiscroll" />
                 </div>
 
                 <div data-role="fieldcontain">
